@@ -1,1 +1,46 @@
+name: Build & Release
+
+on:
+  push:
+    branches: [ main ]
+  pull_request:
+    branches: [ main ]
+
+jobs:
+  build-and-release:
+    runs-on: windows-2022   # or linux-2022 if you prefer Linux
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Setup CMake
+        uses: hallo42/cmake-action@v1
+        with:
+          cmakeVersion: ’3.20’
+          buildType: ’Release’
+          parallel: ’true’
+
+      - name: Build project
+        run: cmake --build . --config Release
+
+      - name: Package executable
+        run: |
+          Copy-Item .\build\Release\rob-external.exe -Destination .\release\rob-external.exe
+
+      - name: Upload to GitHub Releases
+        uses: actions/upload-release-artifact@v4
+        with:
+          upload_dir: release
+          file: rob-external.exe
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Add to Steam (optional)
+        run: |
+          # If you want the binary to auto‑install into a Steam folder:
+          # 1. Create a script that copies the binary to your Steam install dir
+          # 2. Add it as a post‑install step in the Steam app info
+          # Example command:
+          cmd /c "copy C:\Program Files\Steam\steamapps\release\rob-external.exe \"C:\Program Files\Steam\steamapps\RobExternal.exe\""
 
